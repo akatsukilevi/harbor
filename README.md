@@ -14,11 +14,11 @@ To get started, you need the server machines already running, as at the moment t
 
 - [Nomad](https://www.nomadproject.io)
 - [Consul](https://www.consul.io)
-- [Terraofmr](https://www.terraform.io)
+- [Terraform](https://www.terraform.io)
 
 # Setup
 
-Before starting to use it, you need a few steps:
+Before starting, you need to do a few steps:
 
 ## Generate the SSH key
 
