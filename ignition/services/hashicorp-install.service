@@ -1,0 +1,16 @@
+[Unit]
+Description=Add required Nomad/Consul binaries
+Wants=network-online.target
+Before=systemd-user-sessions.service
+After=network-online.target
+ConditionPathExists=!/var/log/provision-done/install-hashicorp
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/bin/install-hashicorp.sh
+StandardOutput=kmsg+console
+StandardError=kmsg+console
+
+[Install]
+WantedBy=multi-user.target
