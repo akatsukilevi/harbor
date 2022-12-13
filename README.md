@@ -109,7 +109,7 @@ $ sudo virsh net-autostart default
 
 Create a `config.tfvars` file following the template below:
 
-```ini
+```hcl
 ssh_key_path = "path/to/ssh/key" # The SSH key that will be put on `.ssh/authorized_keys`
 
 nomad_version         = "1.4.3" # Check Nomad website for the latest version
