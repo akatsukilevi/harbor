@@ -209,9 +209,3 @@ See also the list of [contributors](https://github.com/akatsukilevi/harbor/contr
 ## License
 
 This project is licensed under the GNU General Public License v3.0 License - see the [LICENSE.md](LICENSE.md) file for details
-
-## Acknowledgments
-
-- Hat tip to anyone whose code is used
-- Inspiration
-- etc
