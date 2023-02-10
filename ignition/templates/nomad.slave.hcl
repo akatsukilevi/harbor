@@ -2,22 +2,35 @@ data_dir      = "/opt/hashicorp/data/nomad"
 bind_addr     = "0.0.0.0"
 enable_syslog = true
 
-client {
-  enabled = true
-  servers = ["${master_host}"]
-
-  node_class = "${node_class}"
-  meta = {
-    % { for key, value in meta~}
-    $ { key } = "${value}"
-    % { endfor~}
-  }
-}
-
 acl {
   enabled    = true
   token_ttl  = "30s"
   policy_ttl = "60s"
+}
+
+client {
+  enabled = true
+
+  servers = [
+	%{ for machine in servers ~}
+	"${ machine }",
+	%{ endfor ~}
+  ]
+
+  meta {
+	%{ for key, value in meta ~}
+	${key} = ${value}
+	%{ endfor ~}
+  }
+}
+
+tls {
+  http = true
+  rpc = true
+
+  ca_file         = "/opt/ssl/root-ca.pem"
+  cert_file       = "/opt/ssl/nomad_cert.pem"
+  key_file        = "/opt/ssl/nomad_key.pem"
 }
 
 plugin "docker" {

@@ -5,23 +5,23 @@ variable "networks" {
   }))
 }
 
-variable "machines" {
+variable "masters" {
+  default = {}
+  type = map(object({
+    network = string
+  }))
+}
+
+variable "slaves" {
   default = {}
   type = map(object({
     network = string,
-    type    = string,
     meta    = map(any)
   }))
 }
 
 variable "ssh_key" {
   description = "The key to be used for SSH access"
-  sensitive   = true
-  type        = string
-}
-
-variable "auth_password" {
-  description = "The password to be used for normal authentication"
   sensitive   = true
   type        = string
 }
@@ -46,36 +46,8 @@ variable "cni_version" {
   type        = string
 }
 
-variable "tls_root_ca" {
-  description = "The path to the Consul TLS Root CA file"
+variable "coreos_channel" {
+  description = "The Channel of CoreOS release that will be fetched"
   type        = string
-  sensitive   = true
-}
-
-variable "tls_consul_cert" {
-  description = "The path to the Consul TLS Node Certificate file"
-  type        = string
-  sensitive   = true
-}
-
-variable "tls_consul_key" {
-  description = "The path to the Consul TLS Node Key file"
-  type        = string
-  sensitive   = true
-}
-
-variable "nomad_master_host" {
-  description = "The IP address of the Nomad Master machine"
-  type        = string
-}
-
-variable "consul_master_host" {
-  description = "The IP address of the Consul Master machine"
-  type        = string
-}
-
-variable "consul_master_key" {
-  description = "The encryption key of the Consul Master machine"
-  type        = string
-  sensitive   = true
+  default     = "stable"
 }

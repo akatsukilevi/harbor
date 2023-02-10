@@ -10,18 +10,6 @@ variable "disk_pool" {
   type        = string
 }
 
-variable "ssh_key_path" {
-  description = "The path to the key to be used for SSH access"
-  sensitive   = true
-  type        = string
-}
-
-variable "auth_password" {
-  description = "The password to be used for normal authentication"
-  sensitive   = true
-  type        = string
-}
-
 variable "nomad_version" {
   description = "The Nomad version that will be used"
   type        = string
@@ -42,45 +30,29 @@ variable "cni_version" {
   type        = string
 }
 
-variable "tls_root_ca" {
-  description = "The path to the Consul TLS Root CA file"
+variable "coreos_image" {
+  description = "The image of CoreOS that will be used"
   type        = string
+}
+
+variable "coreos_image_pool" {
+  description = "The pool where the image of CoreOS that will be used is located"
+  type        = string
+  default     = "default"
+}
+
+variable "ssh_key_path" {
+  description = "The path to the key to be used for SSH access"
   sensitive   = true
-}
-
-variable "tls_consul_cert" {
-  description = "The path to the Consul TLS Node Certificate file"
   type        = string
-  sensitive   = true
-}
-
-variable "tls_consul_key" {
-  description = "The path to the Consul TLS Node Key file"
-  type        = string
-  sensitive   = true
-}
-
-variable "nomad_master_host" {
-  description = "The IP address of the Nomad Master machine"
-  type        = string
-}
-
-variable "consul_master_host" {
-  description = "The IP address of the Consul Master machine"
-  type        = string
-}
-
-variable "consul_master_key" {
-  description = "The encryption key of the Consul Master machine"
-  type        = string
-  sensitive   = true
 }
 
 variable "barebones" {
   description = "The infrastructure that will be set-up on KVM"
   default = {
-    machines = {}
     networks = {}
+    masters  = {}
+    slaves   = {}
   }
 
   type = object({
@@ -88,7 +60,11 @@ variable "barebones" {
       address = string,
       domain  = string
     })),
-    machines = map(object({
+    masters = map(object({
+      network = string,
+      type    = string,
+    })),
+    slaves = map(object({
       network = string,
       type    = string,
       meta    = map(any)
@@ -113,8 +89,9 @@ variable "barebones" {
 variable "kvm" {
   description = "The infrastructure that will be set-up on KVM"
   default = {
-    machines = {}
     networks = {}
+    masters  = {}
+    slaves   = {}
   }
 
   type = object({
@@ -124,13 +101,17 @@ variable "kvm" {
       domain        = string,
       dns_forwarder = string
     })),
-    machines = map(object({
-      image    = string,
+    masters = map(object({
+      network  = string,
+      vcpu     = number,
+      memoryMB = number,
+      diskSize = number
+    })),
+    slaves = map(object({
       network  = string,
       vcpu     = number,
       memoryMB = number,
       diskSize = number,
-      type     = string,
       meta     = map(any)
     }))
   })

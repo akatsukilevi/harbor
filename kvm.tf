@@ -2,28 +2,19 @@
 module "ign_config_kvm" {
   source = "./ignition"
 
-  ssh_key       = file(var.ssh_key_path)
-  auth_password = var.auth_password
-  machines      = var.kvm.machines
-  networks      = var.kvm.networks
+  ssh_key  = file(var.ssh_key_path)
+  networks = var.kvm.networks
+  masters  = var.kvm.masters
+  slaves   = var.kvm.slaves
 
   nomad_version         = var.nomad_version
   consul_version        = var.consul_version
   driver_podman_version = var.driver_podman_version
   cni_version           = var.cni_version
-
-  tls_root_ca     = var.tls_root_ca
-  tls_consul_cert = var.tls_consul_cert
-  tls_consul_key  = var.tls_consul_key
-
-  nomad_master_host  = var.nomad_master_host
-  consul_master_host = var.consul_master_host
-
-  consul_master_key = var.consul_master_key
 }
 
-#* Provision all the networks mentioned on `kvm.networks`
-resource "libvirt_network" "nat" {
+#* Provision all the networks
+resource "libvirt_network" "networks" {
   for_each  = var.kvm.networks
   name      = each.key
   mode      = each.value.mode
@@ -41,50 +32,96 @@ resource "libvirt_network" "nat" {
   autostart = true
 }
 
-#* Provision all the disks for the machines mentioned on `kvm.machines`
-resource "libvirt_volume" "machine_image" {
-  for_each = var.kvm.machines
+#* Provision all the disks for the machines
+resource "libvirt_volume" "images_masters" {
+  for_each = var.kvm.masters
 
+  base_volume_name = var.coreos_image
+  base_volume_pool = var.coreos_image_pool
   name             = join("_", [each.key, "storage"])
-  base_volume_name = each.value.image
   pool             = var.disk_pool
   size             = each.value.diskSize * 1000000
 }
 
-//* Provision all the CoreOS configuration for the machines mentioned on `kvm.machines`
-resource "libvirt_ignition" "coreos_config" {
-  for_each = var.kvm.machines
+resource "libvirt_volume" "images_slaves" {
+  for_each = var.kvm.slaves
+
+  base_volume_name = var.coreos_image
+  base_volume_pool = var.coreos_image_pool
+  name             = join("_", [each.key, "storage"])
+  pool             = var.disk_pool
+  size             = each.value.diskSize * 1000000
+}
+
+//* Provision all the CoreOS configuration for the machines
+resource "libvirt_ignition" "coreos_masters" {
+  for_each = var.kvm.masters
 
   name    = join("_", ["config", join(".", [each.key, "ign"])])
-  content = module.ign_config_kvm.coreos[each.key].rendered
+  content = module.ign_config_kvm.coreos_masters[each.key].rendered
+}
+
+resource "libvirt_ignition" "coreos_slaves" {
+  for_each = var.kvm.slaves
+
+  name    = join("_", ["config", join(".", [each.key, "ign"])])
+  content = module.ign_config_kvm.coreos_slaves[each.key].rendered
 }
 
 //* Creates the machine themselves
-resource "libvirt_domain" "machine" {
-  for_each = var.kvm.machines
+resource "libvirt_domain" "machines_masters" {
+  for_each = var.kvm.masters
 
   name   = each.key
   memory = each.value.memoryMB
   vcpu   = each.value.vcpu
 
-  coreos_ignition = libvirt_ignition.coreos_config[each.key].id
+  coreos_ignition = libvirt_ignition.coreos_masters[each.key].id
 
-  #* It expects to have the default KVM network created for host-guest communications
+  # Attach the required network interface
   network_interface {
-    network_name   = "default"
-    hostname       = join(".", [each.key, var.kvm.networks[each.value.network].domain])
-    wait_for_lease = true
-  }
-
-  #* The custom network requested by the machine
-  network_interface {
-    network_id     = libvirt_network.nat[each.value.network].id
+    network_id     = libvirt_network.networks[each.value.network].id
     hostname       = join(".", [each.key, var.kvm.networks[each.value.network].domain])
     wait_for_lease = true
   }
 
   disk {
-    volume_id = libvirt_volume.machine_image[each.key].id
+    volume_id = libvirt_volume.images_masters[each.key].id
+  }
+
+  #* We attach a serial for ease-of-maintenance
+  console {
+    type        = "pty"
+    target_port = "0"
+    target_type = "serial"
+  }
+
+  #* SPICE-based graphics, should be disabled?
+  graphics {
+    type        = "spice"
+    listen_type = "address"
+    autoport    = "true"
+  }
+}
+
+resource "libvirt_domain" "machines_slaves" {
+  for_each = var.kvm.slaves
+
+  name   = each.key
+  memory = each.value.memoryMB
+  vcpu   = each.value.vcpu
+
+  coreos_ignition = libvirt_ignition.coreos_slaves[each.key].id
+
+  # Attach the required network interface
+  network_interface {
+    network_id     = libvirt_network.networks[each.value.network].id
+    hostname       = join(".", [each.key, var.kvm.networks[each.value.network].domain])
+    wait_for_lease = true
+  }
+
+  disk {
+    volume_id = libvirt_volume.images_slaves[each.key].id
   }
 
   #* We attach a serial for ease-of-maintenance

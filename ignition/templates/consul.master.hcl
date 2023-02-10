@@ -33,8 +33,11 @@ client_addr    = "{{ GetInterfaceIP \"ens3\" }}"
 advertise_addr = "{{ GetInterfaceIP \"ens3\" }}"
 bind_addr      = "0.0.0.0"
 
-encrypt  = "${master_key}"
 data_dir = "/opt/hashicorp/data/consul"
-server   = false
+server   = true
 
-retry_join = ["${master_host}"]
+retry_join = [
+  %{ for machine in setsubtract(servers, [domain]) ~}
+  "${ machine }",
+  %{ endfor ~}
+]

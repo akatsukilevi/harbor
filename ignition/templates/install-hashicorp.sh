@@ -43,21 +43,22 @@ rm -f /opt/cni/bin/binaries.tgz
 # Configure firewall to enable the required ports
 # For Nomad, see: https://developer.hashicorp.com/nomad/docs/install/production/requirements#ports-used
 # For Consul, see: https://developer.hashicorp.com/consul/docs/install/ports
-sudo firewall-cmd --permanent \
-	--add-port=8600/tcp --add-port=8600/udp \
-	--add-port=8500/tcp \
-	--add-port=8501/tcp \
-	--add-port=8502/tcp \
-	--add-port=8301/tcp --add-port=8301/udp \
-	--add-port=8302/tcp --add-port=8302/udp \
-	--add-port=8300/tcp \
-	--add-port=21000-21255/tcp --add-port=2100-21255/udp \
-	--add-port=4646/tcp \
-	--add-port=4647/tcp \
-	--add-port=4648/tcp --add-port=4648/udp
 
-# Reload firewall configurations
-sudo firewall-cmd --reload
+sudo iptables -A INPUT -p tcp --dport 4600 -j ACCEPT # Nomad HTTP API
+sudo iptables -A INPUT -p tcp --dport 4607 -j ACCEPT # Nomad RPC
+sudo iptables -A INPUT -p tcp --dport 4648 -j ACCEPT # Nomad Serf WAN (TCP)
+sudo iptables -A INPUT -p udp --dport 4648 -j ACCEPT # Nomad Serf WAN (UDP)
+
+sudo iptables -A INPUT -p tcp --dport 8600 -j ACCEPT # Consul DNS server (TCP)
+sudo iptables -A INPUT -p udp --dport 8600 -j ACCEPT # Consul DNS server (UDP)
+sudo iptables -A INPUT -p tcp --dport 8500 -j ACCEPT # Consul HTTP API
+sudo iptables -A INPUT -p tcp --dport 8301 -j ACCEPT # Consul LAN Serf (TCP)
+sudo iptables -A INPUT -p udp --dport 8301 -j ACCEPT # Consul LAN Serf (UDP)
+sudo iptables -A INPUT -p tcp --dport 8300 -j ACCEPT # Consul RPC
+sudo iptables -A INPUT -p tcp --match multiport --dports 21000:21255 -j ACCEPT # Consul Sidecar (TCP)
+sudo iptables -A INPUT -p udp --match multiport --dports 21000:21255 -j ACCEPT # Consul Sidecar (UDP)
+
+sudo iptables-save
 
 # Mark the binaries as installed
 mkdir -p /var/log/provision-done
