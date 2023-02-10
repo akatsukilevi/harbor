@@ -1,0 +1,26 @@
+[Unit]
+Description=HashiCorp Consul
+Wants=network-online.target hashicorp-install.service
+After=network-online.target hashicorp-install.service
+ConditionFileNotEmpty=/etc/consul.d/consul.hcl
+ConditionPathExists=/usr/local/bin/consul
+
+[Service]
+EnvironmentFile=-/etc/consul.d/consul.env
+ExecReload=/bin/kill -HUP $MAINPID
+ExecStart=/usr/local/bin/consul agent -config-dir=/etc/consul.d/
+KillMode=process
+KillSignal=SIGINT
+LimitNOFILE=65536
+LimitNPROC=infinity
+Restart=on-failure
+RestartSec=2
+
+StartLimitBurst = 5
+StartLimitIntervalSec = 10s
+
+TasksMax=infinity
+OOMScoreAdjust=-1000
+
+[Install]
+WantedBy=multi-user.target
