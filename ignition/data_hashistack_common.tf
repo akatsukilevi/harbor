@@ -1,15 +1,15 @@
 # TLS -----------------------------------------------------------------------------------------------------------------
 
 resource "tls_private_key" "hashistack_key" {
-  algorithm = "ECDSA"
+  algorithm = "RSA"
 }
 
 resource "tls_private_key" "nomad_key" {
-  algorithm = "ECDSA"
+  algorithm = "RSA"
 }
 
 resource "tls_private_key" "consul_key" {
-  algorithm = "ECDSA"
+  algorithm = "RSA"
 }
 
 resource "tls_self_signed_cert" "hashistack_root_ca" {
@@ -21,18 +21,15 @@ resource "tls_self_signed_cert" "hashistack_root_ca" {
   }
 
   is_ca_certificate = true
-  allowed_uses = [
-    "cert_signing",
-    "code_signing",
-    "ocsp_signing"
-  ]
+
+  # ! This possibly could be limited down to what Nomad/Consul actually uses. Feels like it could be a security issue?
+  allowed_uses = ["any_extended"]
 }
 
 resource "tls_cert_request" "nomad_crt" {
   private_key_pem = tls_private_key.nomad_key.private_key_pem
 
   subject {
-    common_name  = "example.com"
     organization = "Harbor HashiStack - Nomad"
   }
 }
@@ -41,7 +38,6 @@ resource "tls_cert_request" "consul_crt" {
   private_key_pem = tls_private_key.consul_key.private_key_pem
 
   subject {
-    common_name  = "example.com"
     organization = "Harbor HashiStack - Consul"
   }
 }
@@ -67,6 +63,38 @@ resource "tls_locally_signed_cert" "consul_cert" {
 }
 
 # Files ---------------------------------------------------------------------------------------------------------------
+
+# Hashistack Environment Variables
+data "ignition_file" "hashistack_environment" {
+  path      = "/etc/environment"
+  mode      = "0644"
+  overwrite = true
+
+  content {
+    content = <<EOL
+export NOMAD_ADDR="https://127.0.0.1:4646"
+export CONSUL_HTTP_ADDR="https://127.0.0.1:8500"
+
+export NOMAD_HTTP_SSL=true
+export CONSUL_HTTP_SSL=true
+
+export NOMAD_HTTP_SSL_VERIFY=false
+export CONSUL_HTTP_SSL_VERIFY=false
+
+export NOMAD_SKIP_VERIFY=true
+export CONSUL_SKIP_VERIFY=true
+
+export NOMAD_CACERT=/opt/ssl/root-ca.pem
+export CONSUL_CACERT=/opt/ssl/root-ca.pem
+
+export NOMAD_CLIENT_CERT=/opt/ssl/nomad_cert.pem
+export NOMAD_CLIENT_KEY=/opt/ssl/nomad_key.pem
+
+export CONSUL_CLIENT_CERT=/opt/ssl/consul_cert.pem
+export CONSUL_CLIENT_KEY=/opt/ssl/consul_key.pem
+EOL
+  }
+}
 
 #* The main bootstrap script for the Hashistack and dependencies
 data "ignition_file" "hashicorp_install" {
@@ -107,16 +135,6 @@ data "ignition_file" "ssl_root_ca" {
   }
 }
 
-# /opt/ssl/consul_cert.pem
-data "ignition_file" "ssl_consul_cert" {
-  path = "/opt/ssl/consul_cert.pem"
-  mode = "0644"
-
-  content {
-    content = tls_locally_signed_cert.consul_cert.cert_pem
-  }
-}
-
 # /opt/ssl/nomad_cert.pem
 data "ignition_file" "ssl_nomad_cert" {
   path = "/opt/ssl/nomad_cert.pem"
@@ -127,9 +145,9 @@ data "ignition_file" "ssl_nomad_cert" {
   }
 }
 
-# /opt/ssl/consul_key.pem
-data "ignition_file" "ssl_consul_key" {
-  path = "/opt/ssl/consul_key.pem"
+# /opt/ssl/nomad_key.pem
+data "ignition_file" "ssl_nomad_key" {
+  path = "/opt/ssl/nomad_key.pem"
   mode = "0644"
 
   content {
@@ -137,9 +155,19 @@ data "ignition_file" "ssl_consul_key" {
   }
 }
 
-# /opt/ssl/nomad_key.pem
-data "ignition_file" "ssl_nomad_key" {
-  path = "/opt/ssl/nomad_key.pem"
+# /opt/ssl/consul_cert.pem
+data "ignition_file" "ssl_consul_cert" {
+  path = "/opt/ssl/consul_cert.pem"
+  mode = "0644"
+
+  content {
+    content = tls_locally_signed_cert.consul_cert.cert_pem
+  }
+}
+
+# /opt/ssl/consul_key.pem
+data "ignition_file" "ssl_consul_key" {
+  path = "/opt/ssl/consul_key.pem"
   mode = "0644"
 
   content {

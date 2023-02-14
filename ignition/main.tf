@@ -34,6 +34,9 @@ data "ignition_config" "coreos_masters" {
     data.ignition_file.nomad_config_master[each.key].rendered,
     data.ignition_file.hashicorp_install.rendered,
     data.ignition_file.consul_dns.rendered,
+
+    # Hashistack-related files
+    data.ignition_file.hashistack_environment.rendered,
   ]
 }
 
@@ -70,5 +73,8 @@ data "ignition_config" "coreos_slaves" {
     data.ignition_file.nomad_config_slave[each.key].rendered,
     data.ignition_file.hashicorp_install.rendered,
     data.ignition_file.consul_dns.rendered,
+
+    # Hashistack-related files
+    data.ignition_file.hashistack_environment.rendered,
   ]
 }

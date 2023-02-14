@@ -3,9 +3,7 @@ bind_addr     = "0.0.0.0"
 enable_syslog = true
 
 acl {
-  enabled    = true
-  token_ttl  = "30s"
-  policy_ttl = "60s"
+  enabled    = false
 }
 
 server {
@@ -13,11 +11,9 @@ server {
   bootstrap_expect = ${masters_count}
 
   server_join {
-    retry_join = [
-      %{ for machine in setsubtract(servers, [domain]) ~}
+    retry_join = [%{ for machine in setsubtract(servers, [domain]) ~}
       "${ machine }",
-      %{ endfor ~}
-    ]
+%{ endfor ~}]
     retry_max = 3
     retry_interval = "15s"
   }

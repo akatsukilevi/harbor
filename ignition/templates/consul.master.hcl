@@ -1,8 +1,9 @@
-domain = "consul.${domain}"
-
 addresses {
   dns  = "0.0.0.0"
   http = "0.0.0.0"
+  https = "0.0.0.0"
+  grpc = "0.0.0.0"
+  grpc_tls = "0.0.0.0"
 }
 
 connect {
@@ -10,9 +11,7 @@ connect {
 }
 
 acl {
-  enabled                  = true
-  default_policy           = "allow"
-  enable_token_persistence = true
+  enabled = false
 }
 
 tls {
@@ -29,15 +28,19 @@ tls {
   }
 }
 
+ui_config {
+  enabled = true
+}
+
 client_addr    = "{{ GetInterfaceIP \"ens3\" }}"
 advertise_addr = "{{ GetInterfaceIP \"ens3\" }}"
 bind_addr      = "0.0.0.0"
 
 data_dir = "/opt/hashicorp/data/consul"
+bootstrap_expect = ${length(servers)}
+alt_domain = "consul.${domain}"
 server   = true
 
-retry_join = [
-  %{ for machine in setsubtract(servers, [domain]) ~}
+retry_join = [%{ for machine in setsubtract(servers, [domain]) ~}
   "${ machine }",
-  %{ endfor ~}
-]
+%{ endfor ~}]

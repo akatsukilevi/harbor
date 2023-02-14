@@ -95,13 +95,6 @@ resource "libvirt_domain" "machines_masters" {
     target_port = "0"
     target_type = "serial"
   }
-
-  #* SPICE-based graphics, should be disabled?
-  graphics {
-    type        = "spice"
-    listen_type = "address"
-    autoport    = "true"
-  }
 }
 
 resource "libvirt_domain" "machines_slaves" {
@@ -129,12 +122,5 @@ resource "libvirt_domain" "machines_slaves" {
     type        = "pty"
     target_port = "0"
     target_type = "serial"
-  }
-
-  #* SPICE-based graphics, should be disabled?
-  graphics {
-    type        = "spice"
-    listen_type = "address"
-    autoport    = "true"
   }
 }

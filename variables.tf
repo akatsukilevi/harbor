@@ -62,11 +62,9 @@ variable "barebones" {
     })),
     masters = map(object({
       network = string,
-      type    = string,
     })),
     slaves = map(object({
       network = string,
-      type    = string,
       meta    = map(any)
     }))
   })

@@ -3,9 +3,7 @@ bind_addr     = "0.0.0.0"
 enable_syslog = true
 
 acl {
-  enabled    = true
-  token_ttl  = "30s"
-  policy_ttl = "60s"
+  enabled    = false
 }
 
 client {
