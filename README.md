@@ -93,15 +93,8 @@ consul_version        = "1.14.1" # Check Consul website for the latest version
 driver_podman_version = "0.4.1" # Check https://github.com/hashicorp/nomad-driver-podman for latest version
 cni_version           = "1.1.1" # Check https://github.com/containernetworking/plugins for latest version
 
-tls_root_ca     = "path/to/consul/root_ca.pem"
-tls_consul_cert = "path/to/consul/agent.pem"
-tls_consul_key  = "path/to/consul/agent.key"
-
-nomad_master_host  = "0.0.0.0" # IP of the Nomad master server
-consul_master_host = "0.0.0.0" # IP of the Consul master server
-
-consul_master_key = "placeholder" # The encryption key used by Consul for encryption
-auth_password     = "placeholder" # The password of the user that will be created on CoreOS
+coreos_image      = "coreos.qcow2" # The name of the CoreOS image that will be used, can be ignored if using barebones only
+coreos_image_pool = "default" # The pool that the CoreOS image can be found at, can be ignored if using barebones only
 
 # OPTIONAL: Can be omitted if you'd like to only run through KVM
 barebones = {

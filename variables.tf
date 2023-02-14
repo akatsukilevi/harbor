@@ -33,6 +33,7 @@ variable "cni_version" {
 variable "coreos_image" {
   description = "The image of CoreOS that will be used"
   type        = string
+  default     = "coreos.qcow2"
 }
 
 variable "coreos_image_pool" {
